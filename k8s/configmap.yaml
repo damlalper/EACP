@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eacp-config
+  namespace: eacp
+data:
+  config.yaml: |
+    # EACP Configuration
+    environment: production
+    
+    jira:
+      base_url: "https://your-jira-instance.atlassian.net"
+      api_version: "3"
+    
+    azure_devops:
+      organization: "your-org"
+      project: "your-project"
+      api_version: "7.0"
+    
+    crm:
+      type: "hubspot"
+      base_url: "https://api.hubapi.com"
+    
+    sap:
+      host: "sap-gateway.example.com"
+      port: 8080
+      protocol: "http"
+    
+    vector_db:
+      type: "chroma"
+      host: "chroma"
+      port: 8000
+    
+    ollama:
+      base_url: "http://ollama:11434"
+      model: "mistral"
+    
+    monitoring:
+      enabled: true
+      prometheus_port: 8000
+      metrics_path: "/metrics"

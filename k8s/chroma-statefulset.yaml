@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: chroma
+  namespace: eacp
+spec:
+  serviceName: chroma-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chroma
+  template:
+    metadata:
+      labels:
+        app: chroma
+    spec:
+      containers:
+      - name: chroma
+        image: chromadb/chroma:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: CHROMA_DB_IMPL
+          value: "duckdb+parquet"
+        - name: PERSIST_DIRECTORY
+          value: "/chroma/data"
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        volumeMounts:
+        - name: chroma-storage
+          mountPath: /chroma/data
+        livenessProbe:
+          httpGet:
+            path: /api/v1
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v1
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+  volumeClaimTemplates:
+  - metadata:
+      name: chroma-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chroma-headless
+  namespace: eacp
+spec:
+  clusterIP: None
+  selector:
+    app: chroma
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chroma
+  namespace: eacp
+spec:
+  selector:
+    app: chroma
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
+  type: ClusterIP

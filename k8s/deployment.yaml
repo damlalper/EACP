@@ -1,0 +1,181 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eacp
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eacp-app
+  namespace: eacp
+  labels:
+    app: eacp
+    version: v1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: eacp
+  template:
+    metadata:
+      labels:
+        app: eacp
+        version: v1
+    spec:
+      serviceAccountName: eacp-sa
+      containers:
+      - name: eacp
+        image: eacp:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: api
+          containerPort: 8000
+          protocol: TCP
+        - name: metrics
+          containerPort: 8001
+          protocol: TCP
+        env:
+        - name: EACP_ENV
+          value: "production"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: eacp-secrets
+              key: openai_api_key
+        - name: JIRA_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: eacp-secrets
+              key: jira_email
+        - name: JIRA_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: eacp-secrets
+              key: jira_api_token
+        - name: AZURE_DEVOPS_PAT
+          valueFrom:
+            secretKeyRef:
+              name: eacp-secrets
+              key: azure_devops_pat
+        - name: HUBSPOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: eacp-secrets
+              key: hubspot_api_key
+        - name: VECTOR_DB_HOST
+          value: "chroma"
+        - name: VECTOR_DB_PORT
+          value: "8000"
+        - name: OLLAMA_BASE_URL
+          value: "http://ollama:11434"
+        - name: REDIS_HOST
+          value: "redis"
+        - name: REDIS_PORT
+          value: "6379"
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: api
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: api
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 2
+        volumeMounts:
+        - name: config
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: config
+        configMap:
+          name: eacp-config
+      - name: logs
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - eacp
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eacp-service
+  namespace: eacp
+  labels:
+    app: eacp
+spec:
+  type: ClusterIP
+  ports:
+  - name: api
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  - name: metrics
+    port: 8001
+    targetPort: 8001
+    protocol: TCP
+  selector:
+    app: eacp
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: eacp-hpa
+  namespace: eacp
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: eacp-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: eacp-sa
+  namespace: eacp
