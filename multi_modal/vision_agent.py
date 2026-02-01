@@ -5,26 +5,47 @@ Handles PDF, diagrams, tables, and image understanding
 
 from typing import Dict, List, Any, Optional
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
+# Optional imports for real OCR/PDF processing
+try:
+    import easyocr
+except ImportError:
+    easyocr = None
+
+try:
+    import pdfplumber
+except ImportError:
+    pdfplumber = None
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
+
 
 class VisionAgent:
-    """Agent for vision and document understanding"""
+    """Agent for vision and document understanding using EasyOCR and pdfplumber."""
     
-    def __init__(self, llm_client=None):
+    def __init__(self, llm_client=None, ocr_languages: List[str] = None):
         self.llm_client = llm_client
         self.ocr_engine = None
+        self.ocr_languages = ocr_languages or ['en']
         self._initialize_ocr()
     
     def _initialize_ocr(self):
-        """Initialize OCR engine"""
+        """Initialize OCR engine (EasyOCR if available, else mock)."""
         try:
-            # Could use Tesseract, EasyOCR, or cloud OCR services
-            logger.info("OCR engine initialized (mock)")
-            self.ocr_engine = "mock"
+            if easyocr:
+                self.ocr_engine = easyocr.Reader(self.ocr_languages)
+                logger.info(f"EasyOCR engine initialized with languages: {self.ocr_languages}")
+            else:
+                logger.warning("easyocr not installed; falling back to mock OCR")
+                self.ocr_engine = "mock"
         except Exception as e:
-            logger.error(f"Failed to initialize OCR: {str(e)}")
+            logger.error(f"Failed to initialize EasyOCR: {str(e)}; falling back to mock")
             self.ocr_engine = "mock"
     
     def process_image(self, image_path: str, task: str = "describe") -> Dict[str, Any]:
@@ -71,16 +92,31 @@ class VisionAgent:
             return {"error": str(e)}
     
     def _extract_text(self, image_path: str) -> Dict[str, Any]:
-        """Extract text from image using OCR"""
-        if self.ocr_engine == "mock":
-            return {
-                "image_path": image_path,
-                "text": "[Mock OCR text extraction]",
-                "confidence": 0.85
-            }
+        """Extract text from image using OCR (EasyOCR or mock)."""
+        if not os.path.exists(image_path):
+            return {"error": f"Image file not found: {image_path}"}
         
-        # Real OCR implementation would go here
-        return {"text": "", "confidence": 0.0}
+        if easyocr and isinstance(self.ocr_engine, easyocr.Reader):
+            try:
+                result = self.ocr_engine.readtext(image_path)
+                text = "\n".join([detection[1] for detection in result])
+                confidence = sum([detection[2] for detection in result]) / len(result) if result else 0.0
+                return {
+                    "image_path": image_path,
+                    "text": text,
+                    "confidence": confidence,
+                    "detections": len(result)
+                }
+            except Exception as e:
+                logger.error(f"EasyOCR extraction failed: {str(e)}")
+                return {"error": str(e)}
+        
+        # Mock fallback
+        return {
+            "image_path": image_path,
+            "text": "[Mock OCR text extraction]",
+            "confidence": 0.85
+        }
     
     def _extract_table(self, image_path: str) -> Dict[str, Any]:
         """Extract table from image"""
@@ -124,8 +160,27 @@ class VisionAgent:
         }
     
     def _extract_pdf_text(self, pdf_path: str, pages: Optional[List[int]]) -> str:
-        """Extract text from PDF"""
-        # Mock implementation
+        """Extract text from PDF using pdfplumber or fallback to mock."""
+        if not os.path.exists(pdf_path):
+            return f"[PDF file not found: {pdf_path}]"
+        
+        if pdfplumber:
+            try:
+                with pdfplumber.open(pdf_path) as pdf:
+                    text_parts = []
+                    page_list = pages if pages else range(len(pdf.pages))
+                    for page_num in page_list:
+                        if page_num < len(pdf.pages):
+                            page = pdf.pages[page_num]
+                            text = page.extract_text()
+                            if text:
+                                text_parts.append(f"--- Page {page_num + 1} ---\n{text}")
+                    return "\n\n".join(text_parts)
+            except Exception as e:
+                logger.error(f"pdfplumber extraction failed: {str(e)}")
+                return f"[PDF extraction error: {str(e)}]"
+        
+        # Mock fallback
         return "[Mock PDF text extraction]"
     
     def _extract_pdf_tables(self, pdf_path: str, pages: Optional[List[int]]) -> List[Dict]:

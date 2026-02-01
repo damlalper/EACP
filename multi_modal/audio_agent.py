@@ -5,26 +5,42 @@ Handles audio/video processing, meeting summaries, and command extraction
 
 from typing import Dict, List, Any, Optional
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
+# Optional imports for real ASR
+try:
+    import whisper
+except ImportError:
+    whisper = None
+
+try:
+    from pydub import AudioSegment
+except ImportError:
+    AudioSegment = None
+
 
 class AudioAgent:
-    """Agent for audio and video processing"""
+    """Agent for audio and video processing using OpenAI Whisper."""
     
-    def __init__(self, llm_client=None):
+    def __init__(self, llm_client=None, whisper_model: str = "base"):
         self.llm_client = llm_client
         self.asr_engine = None
+        self.whisper_model = whisper_model
         self._initialize_asr()
     
     def _initialize_asr(self):
-        """Initialize Automatic Speech Recognition engine"""
+        """Initialize Automatic Speech Recognition engine (OpenAI Whisper if available, else mock)."""
         try:
-            # Could use Whisper, Google Speech-to-Text, etc.
-            logger.info("ASR engine initialized (mock)")
-            self.asr_engine = "mock"
+            if whisper:
+                self.asr_engine = whisper.load_model(self.whisper_model)
+                logger.info(f"Whisper ASR engine initialized with model: {self.whisper_model}")
+            else:
+                logger.warning("whisper not installed; falling back to mock ASR")
+                self.asr_engine = "mock"
         except Exception as e:
-            logger.error(f"Failed to initialize ASR: {str(e)}")
+            logger.error(f"Failed to initialize Whisper: {str(e)}; falling back to mock")
             self.asr_engine = "mock"
     
     def process_audio(self, audio_path: str, task: str = "transcribe") -> Dict[str, Any]:
@@ -69,17 +85,31 @@ class AudioAgent:
             return {"error": str(e)}
     
     def _transcribe_audio(self, audio_path: str) -> Dict[str, Any]:
-        """Transcribe audio to text"""
-        if self.asr_engine == "mock":
-            return {
-                "audio_path": audio_path,
-                "transcript": "[Mock audio transcription]",
-                "confidence": 0.85,
-                "language": "en"
-            }
+        """Transcribe audio to text using Whisper or fallback to mock."""
+        if not os.path.exists(audio_path):
+            return {"error": f"Audio file not found: {audio_path}"}
         
-        # Real ASR implementation would go here
-        return {"transcript": "", "confidence": 0.0}
+        if whisper and isinstance(self.asr_engine, whisper.Whisper):
+            try:
+                result = self.asr_engine.transcribe(audio_path)
+                return {
+                    "audio_path": audio_path,
+                    "transcript": result.get("text", ""),
+                    "confidence": result.get("confidence", 0.0),
+                    "language": result.get("language", "en"),
+                    "segments": len(result.get("segments", []))
+                }
+            except Exception as e:
+                logger.error(f"Whisper transcription failed: {str(e)}")
+                return {"error": str(e)}
+        
+        # Mock fallback
+        return {
+            "audio_path": audio_path,
+            "transcript": "[Mock audio transcription]",
+            "confidence": 0.85,
+            "language": "en"
+        }
     
     def _summarize_audio(self, audio_path: str) -> Dict[str, Any]:
         """Summarize audio content"""

@@ -4,20 +4,23 @@
 python>=3.8
 
 # LLM & AI
-# transformers>=4.30.0
-# torch>=2.0.0
-# sentence-transformers>=2.2.0
-# peft>=0.3.0  # For LoRA/QLoRA fine-tuning
+transformers>=4.30.0
+torch>=2.0.0
+sentence-transformers>=2.2.0
+peft>=0.3.0  # For LoRA/QLoRA fine-tuning
 
 # Local LLM Support
-# ollama  # For Ollama backend
-# vllm>=0.2.0  # For vLLM backend
+ollama>=0.1.0  # For Ollama backend
+vllm>=0.2.0  # For vLLM backend
+langchain>=0.1.0  # LangChain framework
+langchain-openai>=0.0.1  # OpenAI integration
 
 # Vector Databases
-# chromadb>=0.4.0
-# pinecone-client>=2.2.0
-# weaviate-client>=3.24.0
-# qdrant-client>=1.6.0
+chromadb>=0.4.0
+pinecone-client>=2.2.0
+weaviate-client>=3.24.0
+qdrant-client>=1.6.0
+sentence-transformers>=2.2.0  # For embeddings
 
 # Enterprise Integrations
 # jira>=3.0.0
@@ -25,17 +28,19 @@ python>=3.8
 requests>=2.31.0
 
 # Multi-Modal
-# pillow>=10.0.0
-# pytesseract>=0.3.10  # OCR
-# pdfplumber>=0.9.0  # PDF processing
-# opencv-python>=4.8.0  # Image processing
-# whisper>=1.1.0  # Speech-to-text
-# moviepy>=1.0.3  # Video processing
+pillow>=10.0.0
+easyocr>=1.7.0  # OCR engine
+pytesseract>=0.3.10  # Alternative OCR
+pdfplumber>=0.9.0  # PDF text/table extraction
+opencv-python>=4.8.0  # Image processing
+openai-whisper>=20231117  # Speech-to-text
+pydub>=0.25.1  # Audio processing
+moviepy>=1.0.3  # Video processing
 
 # Browser Automation
-# selenium>=4.10.0
-# playwright>=1.36.0
-# beautifulsoup4>=4.12.0
+selenium>=4.10.0
+playwright>=1.36.0
+beautifulsoup4>=4.12.0
 
 # Utilities
 numpy>=1.24.0
