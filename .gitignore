@@ -1,0 +1,74 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Configuration
+config.yaml
+.env
+*.key
+*.pem
+
+# Logs
+logs/
+*.log
+
+# Models
+models/
+*.bin
+*.safetensors
+*.pt
+*.pth
+
+# Data
+data/
+*.csv
+*.jsonl
+*.parquet
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+
+# LLM specific
+.ollama/
+checkpoints/
+
+# Vector DB
+*.db
+*.sqlite
+chroma_db/

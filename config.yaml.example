@@ -1,0 +1,62 @@
+# EACP Configuration Example
+# Copy this file to config.yaml and update with your settings
+
+llm:
+  model_name: "llama"
+  backend: "ollama"  # Options: ollama, vllm, llama
+  model_path: null  # Path to local model if using llama backend
+
+vector_db:
+  backend: "chroma"  # Options: chroma, pinecone, weaviate, qdrant
+  config:
+    collection_name: "eacp_documents"
+    # For Pinecone:
+    # api_key: "your-api-key"
+    # environment: "us-east-1"
+    # index_name: "eacp-index"
+    # For Weaviate/Qdrant:
+    # url: "http://localhost:8080"
+
+embeddings:
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+
+integrations:
+  jira:
+    base_url: "https://your-instance.atlassian.net"
+    username: "user@example.com"
+    api_token: "your-api-token"  # Obtain from https://id.atlassian.com/manage-profile/security/api-tokens
+  
+  azure_devops:
+    organization: "your-org"
+    project: "your-project"
+    personal_access_token: "your-pat"  # Create a PAT: Azure DevOps -> User Settings -> Personal access tokens
+  
+  sap:
+    host: "your-sap-host"
+    client: "100"
+    username: "your-username"
+    password: "your-password"
+    # Note: SAP access typically requires enterprise credentials or an API gateway. No free public key available.
+  
+  crm:
+    crm_type: "salesforce"  # Options: salesforce, hubspot, generic
+    api_key: "your-api-key"  # For HubSpot use a private app token (free tier available). See https://developers.hubspot.com/docs/api/overview
+    base_url: "https://your-crm-instance.com"
+
+# Vector DB providers (free tiers / signups):
+# - Pinecone: https://www.pinecone.io/ (free tier available, get API key from dashboard)
+# - Weaviate Cloud or self-host: https://www.semi.technology/
+# - Qdrant Cloud / self-host: https://qdrant.tech/
+
+logging:
+  log_file: "logs/eacp.log"
+  level: "INFO"
+
+mlops:
+  monitoring:
+    latency_threshold_ms: 500
+    memory_threshold_mb: 8000
+  
+  gpu:
+    enabled: false
+    gpu_ids: []

@@ -1,0 +1,57 @@
+# Enterprise AI Copilot Platform (EACP) Requirements
+
+# Core Dependencies
+python>=3.8
+
+# LLM & AI
+# transformers>=4.30.0
+# torch>=2.0.0
+# sentence-transformers>=2.2.0
+# peft>=0.3.0  # For LoRA/QLoRA fine-tuning
+
+# Local LLM Support
+# ollama  # For Ollama backend
+# vllm>=0.2.0  # For vLLM backend
+
+# Vector Databases
+# chromadb>=0.4.0
+# pinecone-client>=2.2.0
+# weaviate-client>=3.24.0
+# qdrant-client>=1.6.0
+
+# Enterprise Integrations
+# jira>=3.0.0
+# azure-devops>=6.0.0
+requests>=2.31.0
+
+# Multi-Modal
+# pillow>=10.0.0
+# pytesseract>=0.3.10  # OCR
+# pdfplumber>=0.9.0  # PDF processing
+# opencv-python>=4.8.0  # Image processing
+# whisper>=1.1.0  # Speech-to-text
+# moviepy>=1.0.3  # Video processing
+
+# Browser Automation
+# selenium>=4.10.0
+# playwright>=1.36.0
+# beautifulsoup4>=4.12.0
+
+# Utilities
+numpy>=1.24.0
+pandas>=2.0.0
+python-dateutil>=2.8.2
+
+# Logging & Monitoring
+# prometheus-client>=0.17.0
+# grafana-api>=1.0.3
+
+# Configuration
+pyyaml>=6.0
+python-dotenv>=1.0.0
+
+# Development
+pytest>=7.4.0
+pytest-cov>=4.1.0
+black>=23.7.0
+flake8>=6.1.0
