@@ -15,6 +15,11 @@ vllm>=0.2.0  # For vLLM backend
 langchain>=0.1.0  # LangChain framework
 langchain-openai>=0.0.1  # OpenAI integration
 
+# Multi-Provider LLM Support
+openai>=1.0.0  # OpenAI GPT API
+anthropic>=0.25.0  # Anthropic Claude API
+google-generativeai>=0.5.0  # Google Gemini API
+
 # Vector Databases
 chromadb>=0.4.0
 pinecone-client>=2.2.0
@@ -41,6 +46,9 @@ moviepy>=1.0.3  # Video processing
 selenium>=4.10.0
 playwright>=1.36.0
 beautifulsoup4>=4.12.0
+
+# Document Processing & ETL
+python-docx>=0.8.11  # Word document processing
 
 # Utilities
 numpy>=1.24.0

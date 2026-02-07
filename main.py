@@ -8,11 +8,13 @@ from typing import Dict, Any, Optional
 from datetime import datetime
 
 from agents import TaskAgent, ResearchAgent, AutomationAgent
-from llm import LocalLLMClient
+from llm import LocalLLMClient, LLMBenchmark, MultiProviderClient
 from knowledge import VectorDB, EmbeddingGenerator, HybridSearch, KnowledgeGraph
 from integrations import JiraConnector, AzureDevOpsConnector, SAPConnector, CRMConnector
 from multi_modal import VisionAgent, AudioAgent, BrowserAutomation
 from mlops import Monitoring, TaskLogger, ABTesting, GPUManager
+from discovery import AIToolDiscovery, AITrendAnalyzer
+from data_pipeline import ETLEngine, DocumentProcessor, DataValidator
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -56,7 +58,16 @@ class EACPOrchestrator:
         
         # Initialize LLMOps
         self._initialize_mlops()
-        
+
+        # Initialize LLM Benchmark & Multi-Provider
+        self._initialize_benchmark()
+
+        # Initialize AI Discovery
+        self._initialize_discovery()
+
+        # Initialize Data Pipeline
+        self._initialize_data_pipeline()
+
         logger.info("EACP initialization complete")
     
     def _initialize_knowledge_base(self):
@@ -148,6 +159,31 @@ class EACPOrchestrator:
         )
         self.mlops["ab_testing"] = ABTesting()
         self.mlops["gpu_manager"] = GPUManager()
+
+    def _initialize_benchmark(self):
+        """Initialize LLM Benchmark & multi-provider support"""
+        providers_config = self.config.get("llm", {}).get("providers", {})
+        if providers_config:
+            self.multi_provider = MultiProviderClient({"providers": providers_config})
+            self.benchmark = LLMBenchmark(self.multi_provider)
+            logger.info("LLM Benchmark engine initialized")
+        else:
+            self.multi_provider = None
+            self.benchmark = None
+
+    def _initialize_discovery(self):
+        """Initialize AI Tool Discovery & Reporting"""
+        self.discovery = AIToolDiscovery(llm_client=self.llm_client)
+        self.trend_analyzer = AITrendAnalyzer(llm_client=self.llm_client)
+        logger.info("AI Discovery engine initialized")
+
+    def _initialize_data_pipeline(self):
+        """Initialize Data Pipeline & ETL"""
+        pipeline_config = self.config.get("data_pipeline", {})
+        self.etl_engine = ETLEngine(config=pipeline_config)
+        self.document_processor = DocumentProcessor(config=pipeline_config)
+        self.data_validator = DataValidator()
+        logger.info("Data Pipeline initialized")
     
     def process_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -206,15 +242,28 @@ class EACPOrchestrator:
     
     def get_status(self) -> Dict[str, Any]:
         """Get platform status"""
-        return {
+        status = {
             "agents": {name: agent.to_dict() for name, agent in self.agents.items()},
             "llm": self.llm_client.get_model_info() if self.llm_client else {},
             "integrations": list(self.integrations.keys()),
             "mlops": {
                 "monitoring": self.mlops["monitoring"].get_statistics(),
                 "alerts": len(self.mlops["monitoring"].get_alerts())
+            },
+            "benchmark": {
+                "available_providers": self.multi_provider.get_available_providers() if self.multi_provider else [],
+                "total_benchmarks": len(self.benchmark.benchmark_history) if self.benchmark else 0
+            },
+            "discovery": {
+                "catalog_size": len(self.discovery.catalog) if self.discovery else 0,
+                "reports_generated": len(self.discovery.reports) if self.discovery else 0
+            },
+            "data_pipeline": {
+                "total_jobs": len(self.etl_engine.jobs) if self.etl_engine else 0,
+                "documents_processed": self.document_processor.processed_count if self.document_processor else 0
             }
         }
+        return status
 
 
 def main():

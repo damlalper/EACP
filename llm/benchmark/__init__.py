@@ -1,15 +1,12 @@
 """
-EACP LLM Module
+EACP LLM Benchmark & Comparison Module
+Systematically evaluates and compares multiple LLM providers
 """
 
-from llm.local_model.llm_client import LocalLLMClient
-from llm.fine_tune.trainer import FineTuningTrainer
 from llm.benchmark.llm_benchmark import LLMBenchmark, BenchmarkResult
 from llm.benchmark.providers import MultiProviderClient
 
 __all__ = [
-    "LocalLLMClient",
-    "FineTuningTrainer",
     "LLMBenchmark",
     "BenchmarkResult",
     "MultiProviderClient"
